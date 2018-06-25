@@ -11,6 +11,8 @@ export class App {
     this._events = {};
   }
 
+  public onRoute = (name: string, ...rest): boolean => true;
+
   on(name: string, fn: (...args) => void, options: any = {}) {
     // if (options.debug) console.log('on: ' + name);
     this._events[name] = this._events[name] || [];

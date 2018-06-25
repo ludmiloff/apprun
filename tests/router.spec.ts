@@ -9,15 +9,15 @@ describe('router', () => {
 
   it('should not fire event if not initialize', () => {
     const fn = jasmine.createSpy('fn');
-    app.on('//', fn);
+    app.onRoute = fn;
     expect(fn).not.toHaveBeenCalled();
   });
 
   it('should fire events if initialized', () => {
     const fn1 = jasmine.createSpy('fn1');
-    const fn2 = jasmine.createSpy('fn2');
+    const fn2 = jasmine.createSpy('fn2').and.returnValue(true);
     app.on('#', fn1);
-    app.on('//', fn2);
+    app.onRoute = fn2;
     route('');
     expect(fn1).toHaveBeenCalledWith();
     expect(fn2).toHaveBeenCalledWith('#');
@@ -25,9 +25,9 @@ describe('router', () => {
 
   it('should fire events if location hash changes', (done) => {
     const fn3 = jasmine.createSpy('fn3');
-    const fn4 = jasmine.createSpy('fn4');
+    const fn4 = jasmine.createSpy('fn4').and.returnValue(true);
     app.on('#x', fn3);
-    app.on('//', fn4);
+    app.onRoute = fn4;
     document.location.href = '#x';
     setTimeout(() => {
       expect(fn3).toHaveBeenCalledWith();
@@ -38,9 +38,9 @@ describe('router', () => {
 
   it('should route location path', () => {
     const fn1 = jasmine.createSpy('fn1');
-    const fn2 = jasmine.createSpy('fn2');
+    const fn2 = jasmine.createSpy('fn2').and.returnValue(true);
     app.on('/home', fn1);
-    app.on('//', fn2);
+    app.onRoute = fn2;
     app.run('route', '/home');
     expect(fn1).toHaveBeenCalledWith();
     expect(fn2).toHaveBeenCalledWith('/home');
@@ -48,12 +48,22 @@ describe('router', () => {
 
   it('should route location all path', () => {
     const fn1 = jasmine.createSpy('fn1');
-    const fn2 = jasmine.createSpy('fn2');
+    const fn2 = jasmine.createSpy('fn2').and.returnValue(true);
     app.on('/x', fn1);
-    app.on('//', fn2);
+    app.onRoute = fn2;
     app.run('route', '/x/y/z');
     expect(fn1).toHaveBeenCalledWith('y', 'z');
     expect(fn2).toHaveBeenCalledWith('/x', 'y', 'z');
   });
+
+  it('should block event on certain condition', () => {
+    const fn1 = jasmine.createSpy('fn1');
+    const fn2 = jasmine.createSpy('fn2').and.returnValue(false);
+    app.on('/x', fn1);
+    app.onRoute = fn2;
+    app.run('route', '/x/y/z');
+    expect(fn1).not.toHaveBeenCalled();
+    expect(fn1).not.toHaveBeenCalled();
+  })
 
 });

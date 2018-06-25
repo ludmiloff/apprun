@@ -13,11 +13,13 @@ export interface IApp {
   createElement(tag: string | Function, props, ...children): VNode | VNode[];
   render(element: HTMLElement, node: VNode): void;
   Fragment(props, ...children): any[];
+  onRoute: (name: string, ...rest) => boolean;  
 }
 
 app.createElement = createElement;
 app.render = render;
 app.Fragment = Fragment;
+
 
 app.start = <T>(element?: HTMLElement | string, model?: T,  view?: View<T>, update?: Update<T>,
   options?: { history?, rendered?: (state: T) => void }) : Component<T> => {

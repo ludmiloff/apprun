@@ -10,14 +10,17 @@ export default function route(url: string) {
   if (!url) url = '#';
   if (url.startsWith('#')) {
     const [name, ...rest] = url.split('/');
-    app.run(name, ...rest);
-    app.run(ROUTER_EVENT, name, ...rest);
+    if (app.onRoute(name, ...rest))
+      app.run(name, ...rest);
+    //app.run(ROUTER_EVENT, name, ...rest);
   } else if (url.startsWith('/')) {
     const [_, name, ...rest] = url.split('/');
-    app.run('/' + name, ...rest);
-    app.run(ROUTER_EVENT, '/' + name, ...rest);
+    if (app.onRoute('/' + name, ...rest))
+      app.run('/' + name, ...rest);
+    //app.run(ROUTER_EVENT, '/' + name, ...rest);
   } else {
-    app.run(url);
-    app.run(ROUTER_EVENT, url);
+    if (app.onRoute(url))
+      app.run(url);
+    //app.run(ROUTER_EVENT, url);
   }
 }
