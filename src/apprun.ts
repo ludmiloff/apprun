@@ -20,7 +20,6 @@ app.createElement = createElement;
 app.render = render;
 app.Fragment = Fragment;
 
-
 app.start = <T>(element?: HTMLElement | string, model?: T,  view?: View<T>, update?: Update<T>,
   options?: { history?, rendered?: (state: T) => void }) : Component<T> => {
     const opts = Object.assign(options || {}, { render: true, global_event: true });
