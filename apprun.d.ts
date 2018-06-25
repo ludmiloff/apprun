@@ -20,6 +20,7 @@ declare module 'apprun' {
     createElement(tag: string | Function, props, ...children): VNode | VNode[];
     render(element: HTMLElement, node: VNode): void;
     Fragment(props, ...children): any[];
+    onRoute: (name: string, ...rest) => boolean;
   }
 
   export class Component<T=any> {
