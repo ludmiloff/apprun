@@ -39,7 +39,8 @@ if (root['app'] && root['app']['start']) {
   if (typeof document === 'object') {
     document.addEventListener("DOMContentLoaded", () => {
       window.onpopstate = () => route(location.hash || location.pathname);
-      route(location.hash);
+      window.location.hash = "/"
+      //route(location.hash);
     });
   }
 }
