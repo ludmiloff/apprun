@@ -106,7 +106,7 @@ describe('vdom-my', () => {
   });
 
   it('it should render array of nodes', () => {
-    const element = render(createElement('div', 'a'));
+    const element = render(createElement('div', null, 'a'));
     let nodes = {
       tag: "div",
       props: null,
@@ -118,7 +118,7 @@ describe('vdom-my', () => {
   });
 
   it('it should render array of text', () => {
-    const element = render(createElement('div', 'a'));
+    const element = render(createElement('div', null, 'a'));
     const nodes =
       { "tag": "div", "props": null, "children": [{ "tag": "div", "props": null, "children": ["Hello: ", "world"] }] }
     for (let i = 0; i < 5; i++){
@@ -171,19 +171,37 @@ describe('vdom-my', () => {
     expect(element.childNodes.length).toBe(3)
 
     render(createElement('div', null,
-      createElement('input', null),
+      createElement('img', null),
       null,
-      createElement('input', null),
+      createElement('img', null),
     ));
     expect(element.childNodes.length).toBe(2)
-
-    render(createElement('div', null,
-      createElement('input', null),
-      '',
-      createElement('input', null),
-    ));
-    expect(element.childNodes.length).toBe(2)
-
+    expect(element.outerHTML).toBe('<div><img><img></div>');
   });
 
+  it('it should remove text child', () => {
+    root.innerHTML = "text";
+    const element = root;
+
+    render(createElement('div', null,
+      createElement('img', null),
+      null,
+      createElement('img', null),
+    ));
+    expect(element.childNodes.length).toBe(1)
+    expect(element.outerHTML).toBe('<div><div><img><img></div></div>');
+  });
+
+  it('it should remove children', () => {
+    root.innerHTML = "<div>1</div><div>2</div>";
+    const element = root;
+
+    render(createElement('div', null,
+      createElement('img', null),
+      null,
+      createElement('img', null),
+    ));
+    expect(element.childNodes.length).toBe(1)
+    expect(element.outerHTML).toBe('<div><div><img><img></div></div>');
+  });
 });

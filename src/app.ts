@@ -12,36 +12,57 @@ export class App {
   }
 
   on(name: string, fn: (...args) => void, options: any = {}) {
-    // if (options.debug) console.log('on: ' + name);
     this._events[name] = this._events[name] || [];
     this._events[name].push({ fn: fn, options: options });
   }
 
-  run(name: string, ...args) {
-    const subscribers = this._events[name];
-    console.assert(!!subscribers, 'No subscriber for event: ' + name);
-    if (subscribers) this._events[name] = subscribers.filter((sub) => {
-      let { fn, options } = sub;
-      if (options.delay) {
-        this.delay(name, fn, args, options);
-      } else {
-        // if (options.debug) console.log('run: ' + name, args);
-        fn.apply(this, args);
-      }
-      return !sub.options.once;
-    });
+  off(name: string, fn: (...args) => void) {
+    let subscribers = this._events[name];
+    if (subscribers) {
+      subscribers = subscribers.filter((sub) => sub.fn !== fn);
+      if (subscribers.length) this._events[name] = subscribers;
+      else delete this._events[name]
+    }
   }
 
-  once(name: string, fn) { this.on(name, fn); }
+  run(name: string, ...args) {
+    let subscribers = this._events[name];
+    console.assert(!!subscribers, 'No subscriber for event: ' + name);
+    if (subscribers) {
+      subscribers = subscribers.filter((sub) => {
+        const { fn, options } = sub;
+        if (options.delay) {
+          this.delay(name, fn, args, options);
+        } else {
+          fn.apply(this, args);
+        }
+        return !sub.options.once;
+      });
+      if (subscribers.length) this._events[name] = subscribers;
+      else delete this._events[name]
+    }
+  }
+
+  once(name: string, fn, options: any = {}) {
+    this.on(name, fn, { ...options, once: true });
+  }
 
   private delay(name, fn, args, options) {
     if (options._t) clearTimeout(options._t);
     options._t = setTimeout(() => {
       clearTimeout(options._t);
-      // if (options.debug) console.log(`run-delay ${options.delay}:` + name, args);
       fn.apply(this, args);
     }, options.delay);
   }
 }
 
-export default new App();
+let app: App;
+declare var global;
+const root = global || window;
+if (root['app'] && root['app']['start']) {
+  app = root['app'];
+} else {
+  app = new App();
+  root['app'] = app;
+}
+export default app;

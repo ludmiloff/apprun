@@ -153,7 +153,7 @@ describe('Component', () => {
     const fn = async () => new Promise((resolve, reject) => {
       window.setTimeout(() => {
         resolve('xx');
-      }, 100);
+      }, 10);
     });
     const spy = jasmine.createSpy('spy');
     class Test extends Component {
@@ -173,7 +173,7 @@ describe('Component', () => {
       expect(callArgs[0][0]).toBe(-1);
       expect(callArgs[1][0]).toBe('xx');
       done()
-    }, 200);
+    }, 20);
   });
 
   it('should support tuple in update', () => {
@@ -188,8 +188,8 @@ describe('Component', () => {
 
     const t = new Test().start();
     t.run('method1');
-    t.run('method1');
-    t.run('method1');
+    // t.run('method1');
+    // t.run('method1');
 
     expect(i).toEqual(1);
   });
@@ -199,7 +199,7 @@ describe('Component', () => {
     const fn = async () => new Promise<string>((resolve) => {
       window.setTimeout(() => {
         resolve('xx');
-      }, 100);
+      }, 10);
     });
 
     class Test extends Component {
@@ -216,13 +216,13 @@ describe('Component', () => {
 
     const t = new Test().start();
     t.run('method1');
-    t.run('method1');
-    t.run('method1');
+    // t.run('method1');
+    // t.run('method1');
 
     window.setTimeout(() => {
       expect(i).toBe(1);
       done();
-    }, 500)
+    }, 20)
   });
 
   it('should support update alias', () => {
@@ -291,6 +291,20 @@ describe('Component', () => {
     expect(document.body['_component']).toBe(component);
   })
 
+
+  it('should clean up the element children', () => {
+    class Test extends Component {
+      view = () => <img src="a"/>
+    }
+    const div = document.createElement('div');
+    const img1 = document.createElement('img');
+    const img2 = document.createElement('img');
+    div.appendChild(img1);
+    div.appendChild(img2);
+    const t = new Test().start(div);
+    expect(div.children.length).toBe(1);
+  });
+  
 });
 
 

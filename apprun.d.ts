@@ -16,6 +16,8 @@ declare module 'apprun' {
     start<T>(element?: Element, model?: T, view?: View<T>, update?: Update<T>,
       options?: { history?, rendered?: (state: T) => void }): Component<T>;
     on(name: string, fn: (...args: any[]) => void, options?: any): void;
+    once(name: string, fn: (...args: any[]) => void, options?: any): void;
+    off(name: string, fn: (...args: any[]) => void): void;
     run(name: string, ...args: any[]): void;
     createElement(tag: string | Function, props, ...children): VNode | VNode[];
     render(element: HTMLElement, node: VNode): void;
@@ -32,6 +34,7 @@ declare module 'apprun' {
     run(name: string, ...args: any[]): void;
     rendered: (state: T) => void;
     mounted: (props: any) => void;
+    unmount: () => void;
   }
 
   export type StatelessComponent<T={}> = (args: T) => VNode | void;

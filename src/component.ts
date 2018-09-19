@@ -3,10 +3,14 @@ import app, { App } from './app';
 import { Reflect } from './decorator'
 import { VNode, View, Update } from './types';
 
+const componentCache = {};
+app.on('get-components', o => o.components = componentCache);
+
 export class Component<T=any> {
   static __isAppRunComponent = true;
   private _app = new App();
-
+  private _actions = [];
+  private _state;
   element;
   private _history = [];
   private _history_idx = -1;
@@ -23,19 +27,19 @@ export class Component<T=any> {
       component: this,
       state,
       vdom: html || '[vdom is null - no render]',
-    })
+    });
+
+    if (typeof document !== 'object') return;
 
     const el = (typeof this.element === 'string') ?
       document.getElementById(this.element) : this.element;
     if (el) el['_component'] = this;
-    if (el && app.render) {
-      app.render(el, html);
-      if (this.rendered) (this.rendered(this.state));
-    }
+    app.render(el, html, this);
+    if (this.rendered) (this.rendered(this.state));
   }
 
-  public setState(state: T, options: { render: boolean, history: boolean, callback?}) {
-
+  public setState(state: T, options: { render: boolean, history: boolean, callback?}
+    = { render: true, history: false}) {
     if (state instanceof Promise) {
       // Promise will not be saved or rendered
       // state will be saved and rendered when promise is resolved
@@ -45,7 +49,9 @@ export class Component<T=any> {
         console.error(err);
         throw err;
       })
+      this._state = state;
     } else {
+      this._state = state;
       if (state == null) return;
       this.state = state;
       if (options.render !== false) this.renderState(state);
@@ -107,6 +113,9 @@ export class Component<T=any> {
     } else {
       this.setState(this.state, { render: false, history: true });
     }
+
+    componentCache[element] = componentCache[element] || [];
+    componentCache[element].push(this);
     return this;
   }
 
@@ -165,9 +174,18 @@ export class Component<T=any> {
   }
 
   public on(name: string, fn: (...args) => void, options?: any) {
+    this._actions.push({ name, fn });
     return this.global_event || this.is_global_event(name) ?
       app.on(name, fn, options) :
       this._app.on(name, fn, options);
   }
 
+  public unmount() {
+    this._actions.forEach(action => {
+      const { name, fn } = action;
+      this.global_event || this.is_global_event(name) ?
+        app.off(name, fn) :
+        this._app.off(name, fn);
+    });
+  }
 }

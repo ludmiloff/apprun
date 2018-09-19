@@ -7,7 +7,7 @@ const ATTR_PROPS = '_props';
 function collect(children) {
   const ch = [];
   const push = (c) => {
-    if (c !== null && c !== undefined && c !== '') {
+    if (c !== null && c !== undefined && c !== '' && c !== false) {
       ch.push((typeof c === 'function' || typeof c === 'object') ? c : `${c}`);
     }
   }
@@ -21,12 +21,12 @@ function collect(children) {
   return ch;
 }
 
-export function createElement (tag: string | Function, props: {}, ...children) {
+export function createElement(tag: string | Function, props: {}, ...children) {
   const ch = collect(children);
   if (typeof tag === 'string') return { tag, props, children: ch };
   else if (tag === undefined && children) return ch; // JSX fragments
   else if (Object.getPrototypeOf(tag).__isAppRunComponent) {
-    return createComponent(tag, { ...props, children });
+    return { tag, props, children: ch } // createComponent(tag, { ...props, children });
   }
   else
     return tag(props, ch);
@@ -36,18 +36,17 @@ const keyCache = {};
 
 export const updateElement = render;
 
-export function render(element: Element, nodes: VNode | VNode[]) {
+export function render(element: Element, nodes: VNode | VNode[], parent = {}) {
   // console.log('render', element, node);
-  if (nodes==null || !element) return;
+  if (nodes == null) return;
+
+  nodes = createComponent(nodes, parent);
+
+  if (!element) return;
   if (Array.isArray(nodes)) {
     updateChildren(element, nodes);
   } else {
-    const node = nodes;
-    if (!element.firstElementChild) {
-      element.appendChild(create(node));
-    } else {
-      update(element.firstElementChild, node);
-    }
+    updateChildren(element, [nodes]);
   }
 }
 
@@ -55,7 +54,7 @@ function same(el: Element, node: VNode) {
   // if (!el || !node) return false;
   const key1 = el.nodeName;
   const key2 = `${node.tag || ''}`;
-  return key1 === key2.toUpperCase();
+  return key1.toUpperCase() === key2.toUpperCase();
 }
 
 function update(element: Element, node: VNode) {
@@ -88,14 +87,13 @@ function updateChildren(element, children) {
         if (el.key === key) {
           update(element.childNodes[i], child);
         } else {
-          const old = key && keyCache[key];
+          const old = keyCache[key];
           if (old) {
-            element.replaceChild(old, el);
+            element.insertBefore(old, el);
             element.appendChild(el);
             update(element.childNodes[i], child);
           } else {
-            element.appendChild(create(child), el);
-            update(element.childNodes[i], child);
+            element.insertBefore(create(child), el);
           }
         }
       } else {
@@ -129,20 +127,20 @@ function createText(node) {
   }
 }
 
-function create(node: VNode | string): Element {
+function create(node: VNode | string, isSvg = false): Element {
   console.assert(node !== null && node !== undefined);
   // console.log('create', node, typeof node);
 
   if (typeof node === "string") return createText(node);
-  if (!node.tag) return createText(JSON.stringify(node));
-
-  const element = (node.tag === "svg")
+  if (!node.tag || (typeof node.tag == 'function')) return createText(JSON.stringify(node));
+  isSvg = isSvg || node.tag === "svg";
+  const element = isSvg
     ? document.createElementNS("http://www.w3.org/2000/svg", node.tag)
     : document.createElement(node.tag);
 
   updateProps(element, node.props);
 
-  if (node.children) node.children.forEach(child => element.appendChild(create(child)));
+  if (node.children) node.children.forEach(child => element.appendChild(create(child, isSvg)));
 
   return element
 }
@@ -172,9 +170,11 @@ function updateProps(element: Element, props: {}) {
       }
     } else if (name.startsWith('data-')) {
       const dname = name.substring(5);
-        if (element.dataset[dname] !== value) element.dataset[dname] = value;
-    } else if (name.startsWith("role") || name.startsWith("aria-")) {
-      if (element.getAttribute(name) !== value) element.setAttribute(name, value)        
+      const cname = dname.replace(/-(\w)/g, (match) => match[1].toUpperCase());
+      if (element.dataset[cname] !== value) element.dataset[cname] = value;
+    } else if (element instanceof SVGElement ||
+      name.startsWith("role") || name.startsWith("aria-")) {
+      if (element.getAttribute(name) !== value) element.setAttribute(name, value)
     } else {
       if (element[name] !== value) element[name] = value;
       if (name === 'key' && value) keyCache[value] = element;
